@@ -1,0 +1,128 @@
+﻿@using AdvancedTesting.Models
+@model List<Recipe>
+
+@{
+    ViewBag.Title = "Recepts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Recipes</h2>
+<div>
+    <div class="recipe-item clear-fix">
+        <div class="recipe-prop recipe-name">Name</div>
+        <div class="recipe-prop recipe-description">Description</div>
+        <div class="recipe-prop recipe-author">Author</div>
+        <div class="recipe-prop recipe-date">CreatedAt</div>
+        <div class="recipe-prop recipe-edit"></div>
+    </div>
+    @foreach (var item in Model)
+    {
+        <div class="recipe-item clear-fix">
+            <div class="recipe-prop recipe-name">@item.Name</div>
+            <div class="recipe-prop recipe-description">@item.Description</div>
+            <div class="recipe-prop recipe-author">@item.Author</div>
+            <div class="recipe-prop recipe-date">@item.CreatedAt</div>
+            <div class="recipe-prop recipe-edit">@Html.ActionLink("Edit", "GetRecipe", "Recipe", new { id = item.Id }, null)</div>
+            <div class="recipe-prop recipe-remove">@Html.ActionLink("Remove", "RemoveRecipe", "Recipe", new { id = item.Id }, null)</div>
+        </div>
+    }
+</div>
+<div id="form-container">
+    @using (Html.BeginForm("AddRecipe", "Recipe", FormMethod.Post, new { id = "add-recipe-form" }))
+    {
+        <div>
+            <label for="Name">Name</label>
+            <input id="recipe-name" name="Name" placeholder="Name"/>
+            <div id="recipe-name-error"></div>
+        </div>
+        <div>
+            <select id="ingredient-list"></select>
+            <input type="button" class="add-button button" id="add-button" value="Add" />
+            <input name="Amount" id="ingredient-amount"/>
+            <div id="ingredient-amount-error"></div>
+        </div>
+        <div>
+            <ul id="ingredient-list-selected"></ul>
+        </div>
+        <div>
+            <label for="Description">Description</label>
+            <textarea name="Description" rows="10" placeholder="Description"></textarea>
+        </div>
+        <div id="ingredient-hidden"></div>
+        <div>
+            <input type="submit" value="Send"/>
+        </div>
+    }
+</div>
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $.ajax({
+                url: "@Url.Action("GetAllIngredients", "Recipe")",
+                success: function(ingredients) {
+                    var dropdown = $('#ingredient-list');
+                    var source = JSON.parse(ingredients);
+                    for (var i = 0; i < source.length; i++) {
+                        dropdown.append($('<option value="' + source[i] + '">' + source[i] + '</option>'));
+                    }
+                },
+                error: function(err) {
+                    console.log(err);
+                }
+            });
+
+            $('#add-button').on('click', function() {
+                var value = $("#ingredient-list").val(),
+                    amount = $('#ingredient-amount').val(),
+                    newIngredient = $('<li data-value="' + value + '" data-amount="' + amount + '">' + value + " - " + amount + '</li>'),
+                    removeButton = $('<div class="button ingredient-remove" data-value="' + value + '">Remove</div>'),
+                    list = $('#ingredient-list-selected');
+
+                if (!amount || isNaN(+amount)) {
+                    $('#ingredient-amount-error').text('Please input valid numeric amount.');
+                    return;
+                } else {
+                    $('#ingredient-amount-error').text('');
+                }
+
+                if (value) {
+                    $('#ingredient-amount').val('');
+                    $("#ingredient-list option[value='" + value + "']").remove();
+                    newIngredient.append(removeButton);
+                    list.append(newIngredient);
+                }
+            });
+
+            $(document).on('click', '.ingredient-remove', function() {
+                var value = $(this).data('value');
+                $(this).parent('li').remove();
+                $('#ingredient-list').prepend($('<option value="' + value + '">' + value + '</option>'));
+            });
+
+            $('#add-recipe-form').submit(function (e) {
+                if ($('#recipe-name').val()) {
+                    $('#recipe-name-error').text('');
+                    setListIndexes();
+                } else {
+                    e.preventDefault();
+                    $('#recipe-name-error').text('Please enter the recipe name');
+                }
+            });
+
+            var setListIndexes = function() {
+                var items = $('#ingredient-list-selected').find('li'),
+                    container = $('#ingredient-hidden'),
+                    ingredientType, ingredientAmount,
+                    value, amount;
+                for (var i = 0; i < items.length; i++) {
+                    value = $(items[i]).data('value');
+                    amount = $(items[i]).data('amount');
+                    ingredientType = $('<input name="Ingredients[' + i + '].Type" type="hidden" value="' + value + '"/>');
+                    ingredientAmount = $('<input name="Ingredients[' + i + '].Amount" type="hidden" value="' + amount + '"/>');
+                    container.append(ingredientType);
+                    container.append(ingredientAmount);
+                }
+            };
+        });
+    </script>   
+}

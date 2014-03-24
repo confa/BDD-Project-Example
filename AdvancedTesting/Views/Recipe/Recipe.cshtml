@@ -1,0 +1,24 @@
+﻿@model AdvancedTesting.Models.Recipe
+
+@{
+    ViewBag.Title = "title";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>@Model.Name</h2>
+<div class="main-content">
+    <div id="recipe-author">@Model.Author</div>
+    <div id="creation-date"><i>@Model.CreatedAt</i></div>
+    <div id="recipe-description">@Model.Description</div>
+    @foreach (var item in Model.Ingredients)
+    {
+        <div>
+            <ul id="ingredient-list-selected">
+                <li>
+                    <div class="ingredient-name">@item.Type.ToString()</div>
+                    <div class="ingredient-amount"><b>@item.Amount g</b></div>
+                </li>
+            </ul>
+        </div>
+    }
+</div>
